@@ -1,27 +1,28 @@
 INSERT INTO department (dept_name)
-Values ('Sales'),
-        ("Management"),
-        ("Accounting"),
-        ("IT")
-INSERT INTO rolse (title, salary, departmanent_id)
-VALUES ("Library Manager", 65000, 1),
-       ("Supervisior", 40000, 1),
-       ('Head of IT', 70000, 2),
-      ("IT Tech", 55000, 2),
-      ("Librarian", 25000, 3),
-      ("Assistant Librarian", 15000, 3),
-      ("Library IT", 15000, 4),
-      ("Library IT Assistant", 14000, 4)
+VALUES ('Sales'),
+       ('Management'),
+       ('Accounting'),
+       ('IT');
 
-INSERT INTO employee (first_name, last_name, role_id, manager_id)
-VALUES ("Tamera", "Norwood", 1, null),
-        ("Kerri", "Atkinson", 2, 1),
-        ("Christopher", "Teranova", 3, null),
-        ("Terry", "Abrams", 4, 3),
-        ("Christian", "Dorner", 8, 2),
-        ("Caitlin", "Fish", 6, 1),
-        ("Trina", "Hall", 6, 1),
-        ("Maggie", "Price", 5, 1),
-        ("Marry", "Spite", 5, 1),
-        ("Shawn", "Taugner", 6, 1),
-        ("Lourdes", "Begay", 5, 2)
+INSERT INTO role (title, salary, dept_id)
+VALUES ('Library Manager', 65000, 1),
+       ('Supervisor', 40000, 1),
+       ('Head of IT', 70000, 2),
+       ('IT Tech', 55000, 2),
+       ('Librarian', 25000, 3),
+       ('Assistant Librarian', 15000, 3),
+       ('Library IT', 15000, 4),
+       ('Library IT Assistant', 14000, 4);
+
+INSERT INTO employee (first_name, last_name, manager_id, role_id)
+VALUES ('Tamera', 'Norwood', null, 1),
+       ('Kerri', 'Atkinson', 1, 2),
+       ('Christopher', 'Teranova', null, 3),
+       ('Terry', 'Abrams', 3, 4),
+       ('Christian', 'Dorner', 2, 8),
+       ('Caitlin', 'Fish', 1, 6),
+       ('Trina', 'Hall', 1, 6),
+       ('Maggie', 'Price', 1, 5),
+       ('Marry', 'Spite', 1, 5),
+       ('Shawn', 'Taugner', 1, 6),
+       ('Lourdes', 'Begay', 2, 5);
