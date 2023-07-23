@@ -65,8 +65,6 @@ function init() {
             banish()
         }else if (action.answer === "View Employees in Department"){
             viewInDepartment()
-        }else if (action.answer === "View Managers Employees"){
-            viewManagerEmp()
         }else if (acton.answer === "Exit"){
             console.log("You are now leaving the employee database. Goodbye!")
             process.exit()
@@ -409,4 +407,4 @@ function viewInDepartment() {
     })
 }
 
-function viewManagerEmp () {}
+init()
