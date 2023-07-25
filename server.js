@@ -3,9 +3,9 @@ const inquirer = require("inquirer")
 const sql = require("mysql2")
 
 const art = require('asciiart-logo')
-const config = require('./package.json')
-console.log(art(config).render())
-
+require("dotenv").config()
+// console.log(art(config).render())
+console.log(process.env.DB_NAME)
 const db = sql.createConnection(
     {
         host: 'localhost',
@@ -16,10 +16,11 @@ const db = sql.createConnection(
     console.log('Now accessing the employee database')
 )
 
-const questions = [{
+const questions = [
+    {
     type: "list",
     name: "action",
-    message: "What action would you like to preform?",
+    message: "What action would you like to perform?",
     choices: [
         "View Departments",
         "View Roles",
@@ -33,14 +34,15 @@ const questions = [{
         "Delete Department",
         "Remove Employee",
         "View Employees in Department",
-        "View Managers Employees",
         "Exit"
-    ]
-}]
+        ]
+    }
+]
 
 function init() {
     inquirer.prompt(questions)
     .then((answer) => {
+        console.log(answer)
         if (answer.action === "View Departments") {
             viewDepartments()
         }else if (answer.action === "View Roles") {
@@ -51,21 +53,21 @@ function init() {
             addDepartment()
         }else if (answer.action === "Add Role") {
             addRole()
-        }else if (action.answer === "Add Employee") {
+        }else if (answer.action === "Add Employee") {
             addEmployee()
-        }else if (action.answer === "Update Employee Role") {
+        }else if (answer.action === "Update Employee Role") {
             updateRole()
-        }else if (action.answer === "Update Employee Manager"){
+        }else if (answer.action === "Update Employee Manager"){
             updateManager()
-        }else if (action.answer === "Delete Role") {
+        }else if (answer.action === "Delete Role") {
             deleteRole()
-        }else if (action.answer === "Delete Department") {
+        }else if (answer.action === "Delete Department") {
             deleteDepartment()
-        }else if (action.answer === "Remove Employee") {
+        }else if (answer.action === "Remove Employee") {
             banish()
-        }else if (action.answer === "View Employees in Department"){
+        }else if (answer.action === "View Employees in Department"){
             viewInDepartment()
-        }else if (acton.answer === "Exit"){
+        }else if (answer.action === "Exit"){
             console.log("You are now leaving the employee database. Goodbye!")
             process.exit()
         }
@@ -75,20 +77,21 @@ function init() {
 
 function viewDepartments() {
     console.log("Viewing Departments")
-    db.query('SELECT * FROM department', (err, results) => {
+    db.query('SELECT * FROM department;', (err, results) => {
         console.table(results);
         init()
     })
 }
-
+// SELECT * FROM role.id, role.title, role.salary, department.dept_name AS department FROM role
+//     JOIN department ON role.dept_id = department.id;
 function viewRoles() {
     console.log("Viewing Roles")
-    db.query(`SELECT * FROM role.id, role.title, role.salary, department.dept_name AS deparement FROM role
-    JOIN department ON role.dept_id = department.id`,
-    db.query(sql, (err, results) => {
+    const sql = 'SELECT role.id, role.title, role.salary, department.dept_name FROM role JOIN department ON role.dept_id = department.id;'
+    db.query(sql, 
+    (err, results) => {
         console.table(results)
         init()
-    }))
+    })
 }
 
 function viewEmployees() {
@@ -121,7 +124,18 @@ function addDepartment() {
 }
 
 function addRole() {
-    inquirer.prompt({
+    const departments = []
+    db.query('SELECT * FROM department', (err, res) => {
+        res.forEach(dept => {
+            let depO = {
+                name: dept.dept_name,
+                value: dept.id
+            }
+            departments.push(depO)
+        })
+    })
+    inquirer.prompt([
+        {
         type: 'input',
         name: 'roleName',
         message: 'What is the name of the role you wish to create?'
@@ -134,12 +148,44 @@ function addRole() {
         name: 'roleDept',
         message: 'in what department does this new role belong?',
         choices: departments
-    })
+    }])
     .then ((answer) => {
         db.query('INSERT INTO role SET ?', {title: answer.roleName, salary: answer.rolePay, dept_id: answer.roleDept}, (err, results) => {
             console.log(answer)
             viewRoles()
-            console.log('New Role successfylly created')
+            console.log('New Role successfully created')
+        })
+    })
+}
+
+function updateManager () {
+    db.query('SELECT * FROM employee', (err, mResp) => 
+    {
+        const manager = []
+        mResp.forEach (({ first_name, last_name, id }) => {
+            manager.push({
+                name: first_name + " " + last_name,
+                value: id
+            })
+        })
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: 'Please select the employee who is changing managers',
+                choices: manager
+            },{
+                type: 'list',
+                name: 'updatedManager',
+                message: 'Select the new manager',
+                choices: manager
+            }
+        ])
+        .then((answer) => {
+            db.query(`UPDATE employee SET manager_id = ${answer.updatedManager} WHERE id = ${answer.employee}`, () => {
+                console.log("Employee manager has been updated")
+                viewEmployees()
+            })
         })
     })
 }
@@ -179,7 +225,7 @@ function addEmployee() {
                     type: 'list',
                     name: 'employeeRole',
                     message: 'Please choose the role the employee will be taking',
-                    choices: role
+                    choices: roles
                 },{
                     type: 'list',
                     name: 'employeeManager',
@@ -230,46 +276,15 @@ function updateRole() {
                     type: 'list',
                     name: 'newRole',
                     message: 'What is this employees new role?',
-                    choices: "role"
+                    choices: role
                 }
             ])
             .then((answer) => {
-                db.query(`UPDATE employee SET role_id = ${answer.role} WHERE id = ${answer.employee}`, (err, res) => {
-                    viewEmployees()
+                console.log('answer', answer)
+                db.query(`UPDATE employee SET role_id = ${answer.newRole} WHERE id = ${answer.employee}`, (err, res) => {
                     console.log("Role updated Successfully")
+                    viewEmployees()
                 })
-            })
-        })
-    })
-}
-
-function updateManager () {
-    db.query('SELECT * FROM employee', (err, mResp) => 
-    {
-        const manager = []
-        mResp.forEach (({ first_name, last_name, id }) => {
-            manager.push({
-                name: first_name + " " + last_name,
-                value: id
-            })
-        })
-        inquirer.prompt([
-            {
-                type: 'list',
-                name: 'employee',
-                message: 'Please select the employee who is changing managers',
-                choices: manager
-            },{
-                type: 'list',
-                name: 'updatedManager',
-                message: 'Select the new manager',
-                choices: manager
-            }
-        ])
-        .then((answer) => {
-            db.query(`UPDATE employee SET manager_id = ${answer.updatedManager} WHERE id ${answer.employee}`, () => {
-                console.log("Employee manager has been updated")
-                viewEmployees()
             })
         })
     })
@@ -279,7 +294,7 @@ function deleteDepartment() {
     db.query('SELECT * FROM department', (err, deptRes) => {
         const depts = []
         deptRes.forEach(({ dept_name, id }) => {
-            departments.push({
+            depts.push({
                 name: dept_name,
                 value: id
             })
@@ -333,15 +348,44 @@ function deleteRole() {
             }
         ])
         .then((answer) => {
+            console.log(answer)
             if (answer.PROCEED === "NO GO BACK") {
                 init()
             } else {
-                db.query(`DELETE * FROM role WHERE id = ${answer.roles}`, (err, res) => {
+                db.query(`DELETE FROM role WHERE id = ${answer.roles}`, (err, res) => {
                     viewRoles()
                     console.log(`${answer.roles} was successfully deleted`)
                 })
             }
         })
+    })
+}
+
+function viewInDepartment() {
+    db.query('SELECT * FROM department', (err, deptRes) => {
+        const depts = []
+         deptRes.forEach(({ dept_name, id }) => {
+            depts.push ({
+                name: dept_name, 
+                value: id
+            })
+         })
+         inquirer.prompt([
+            {
+                type: 'list',
+                name: 'depos',
+                message: "Which departments employees would you like to see?",
+                choices: depts
+            }
+         ])
+         .then ((answer) => {
+            db.query(`SELECT emp.first_name, emp.last_name, dep.dept_name, rl.title 
+            FROM employee AS emp JOIN role as rl ON emp.role_id = rl.id 
+            JOIN department AS dep ON rl.dept_id = dep.id WHERE dep.id = ${answer.depos}  ORDER BY dep.dept_name, emp.last_name, emp.first_name;`, (err, res) => {
+                console.log(res)
+                init()
+            })
+         })
     })
 }
 
@@ -378,32 +422,6 @@ function banish() {
                 })
             }
         })
-    })
-}
-
-function viewInDepartment() {
-    db.query('SELECT * FROM department', (err, deptRes) => {
-        const depts = []
-         deptRes.forEach(({ dept_name, id }) => {
-            depts.push ({
-                name: dept_name, 
-                value: id
-            })
-         })
-         inquirer.prompt([
-            {
-                type: 'list',
-                name: 'depos',
-                message: "Which departments employees would you like to see?",
-                choices: depts
-            }
-         ])
-         .then ((answer) => {
-            db.query(`SELECT emp.first_name, emp.last_name, dep.dept_name, rl.title FROM employee AS emp JOIN role as rl on emp.role_id = rl.id JOIN departments AS dep ON rl.dept_id = dep.id WHERE dep.id = ${answer.depts}  ORDER BY dep.dept_name, emp.last_name, emp.first_name;`, (err, res) => {
-                console.log(res)
-                init()
-            })
-         })
     })
 }
 
