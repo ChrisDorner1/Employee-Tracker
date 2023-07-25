@@ -30,7 +30,7 @@ const questions = [
         "Add Employee",
         "Update Employee Role",
         "Update Employee Manager",
-        "Delete Role",
+        "Remove Role",
         "Delete Department",
         "Remove Employee",
         "View Employees in Department",
@@ -59,7 +59,7 @@ function init() {
             updateRole()
         }else if (answer.action === "Update Employee Manager"){
             updateManager()
-        }else if (answer.action === "Delete Role") {
+        }else if (answer.action === "Remove Role") {
             deleteRole()
         }else if (answer.action === "Delete Department") {
             deleteDepartment()
